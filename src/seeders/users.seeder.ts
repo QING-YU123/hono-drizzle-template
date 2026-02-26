@@ -1,4 +1,4 @@
-import { db } from '../index';
+import { db } from '../db';
 import { seed, reset } from 'drizzle-seed';
 import { usersTable } from '../db/schema/users';
 

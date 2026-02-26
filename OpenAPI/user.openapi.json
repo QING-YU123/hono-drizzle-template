@@ -1,39 +1,63 @@
 {
     "openapi": "3.0.3",
     "info": {
-        "title": "Hono + Drizzle User API",
+        "title": "Hono + Drizzle 用户管理 API",
         "version": "1.0.0",
-        "description": "User CRUD endpoints exposed by this service."
+        "description": "用户管理系统的完整 CRUD 接口文档，支持用户的创建、查询、更新和软删除操作。\n\n## 业务说明\n\n本系统实现了一个完整的用户管理模块，具有以下特点：\n- **软删除模式**：删除操作不会物理删除数据，而是标记为已删除\n- **数据验证**：所有输入参数都经过严格验证\n- **唯一性约束**：邮箱地址必须唯一\n- **RESTful 设计**：遵循 RESTful API 设计规范\n- **错误处理**：提供详细的错误信息和建议"
     },
     "servers": [
         {
-            "url": "http://localhost:3000",
-            "description": "Local development"
+            "url": "http://localhost:3001",
+            "description": "本地开发环境"
         }
     ],
     "tags": [
         {
-            "name": "Users",
-            "description": "User CRUD"
+            "name": "用户管理",
+            "description": "用户的增删改查操作"
         }
     ],
     "paths": {
         "/api/users": {
             "get": {
                 "tags": [
-                    "Users"
+                    "用户管理"
                 ],
-                "summary": "Get all users",
+                "summary": "获取所有用户列表",
+                "description": "### 业务说明\n\n获取系统中所有未被软删除的用户列表。\n\n#### 功能特点\n- 只返回未被软删除的用户（deleted_at 为 null）\n- 返回用户的所有字段信息\n- 按数据库默认顺序返回\n\n#### 使用场景\n- 用户管理界面展示用户列表\n- 数据导出和报表生成\n- 系统统计分析\n\n#### 注意事项\n- 不会返回已被软删除的用户\n- 如果系统用户量很大，建议使用分页查询\n\n#### 返回数据\n返回用户对象数组，每个用户包含：id、name、email、created_at、updated_at、deleted_at 字段",
                 "operationId": "getAllUsers",
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "成功返回用户列表",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "type": "array",
                                     "items": {
                                         "$ref": "#/components/schemas/User"
+                                    }
+                                },
+                                "examples": {
+                                    "成功示例": {
+                                        "summary": "返回多个用户",
+                                        "value": [
+                                            {
+                                                "id": 1,
+                                                "name": "张三",
+                                                "email": "zhangsan@example.com",
+                                                "created_at": "2024-01-15T08:30:00.000Z",
+                                                "updated_at": "2024-01-15T08:30:00.000Z",
+                                                "deleted_at": null
+                                            },
+                                            {
+                                                "id": 2,
+                                                "name": "李四",
+                                                "email": "lisi@example.com",
+                                                "created_at": "2024-01-16T10:20:00.000Z",
+                                                "updated_at": "2024-01-16T10:20:00.000Z",
+                                                "deleted_at": null
+                                            }
+                                        ]
                                     }
                                 }
                             }
@@ -43,9 +67,10 @@
             },
             "post": {
                 "tags": [
-                    "Users"
+                    "用户管理"
                 ],
-                "summary": "Create a user",
+                "summary": "创建新用户",
+                "description": "### 业务说明\n\n在系统中创建一个新的用户账号。\n\n#### 功能特点\n- 自动验证邮箱格式的唯一性\n- 自动设置创建时间和更新时间\n- 返回创建完成的用户信息（包含自动生成的 ID）\n\n#### 使用场景\n- 用户注册功能\n- 管理员手动添加用户\n- 批量导入用户\n\n#### 验证规则\n- **name**：必填，不能为空字符串，会自动去除首尾空格\n- **email**：必填，不能为空字符串，会自动去除首尾空格，在数据库中必须唯一\n\n#### 错误处理\n- **400**：JSON 格式错误或缺少必填字段\n- **409**：邮箱地址已存在（违反唯一约束）\n\n#### 注意事项\n- 邮箱地址在系统中必须唯一，重复邮箱会返回 409 错误\n- 用户创建后无法修改 ID，ID 由数据库自动生成\n- created_at 和 updated_at 由系统自动设置",
                 "operationId": "createUser",
                 "requestBody": {
                     "required": true,
@@ -55,10 +80,11 @@
                                 "$ref": "#/components/schemas/CreateUserRequest"
                             },
                             "examples": {
-                                "example": {
+                                "创建用户示例": {
+                                    "summary": "创建一个新用户",
                                     "value": {
-                                        "name": "Alice",
-                                        "email": "alice@example.com"
+                                        "name": "王五",
+                                        "email": "wangwu@example.com"
                                     }
                                 }
                             }
@@ -67,34 +93,50 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Created",
+                        "description": "用户创建成功，返回完整的用户信息",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/User"
+                                },
+                                "examples": {
+                                    "创建成功": {
+                                        "summary": "返回新创建的用户信息",
+                                        "value": {
+                                            "id": 3,
+                                            "name": "王五",
+                                            "email": "wangwu@example.com",
+                                            "created_at": "2024-02-20T14:25:30.123Z",
+                                            "updated_at": "2024-02-20T14:25:30.123Z",
+                                            "deleted_at": null
+                                        }
+                                    }
                                 }
                             }
                         }
                     },
                     "400": {
-                        "description": "Bad Request (invalid JSON or missing fields)",
+                        "description": "请求参数错误",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/ErrorResponse"
                                 },
                                 "examples": {
-                                    "invalidJson": {
+                                    "JSON格式错误": {
+                                        "summary": "请求体不是有效的 JSON",
                                         "value": {
                                             "message": "Invalid JSON body"
                                         }
                                     },
-                                    "missingName": {
+                                    "缺少姓名": {
+                                        "summary": "未提供 name 字段或为空",
                                         "value": {
                                             "message": "name is required"
                                         }
                                     },
-                                    "missingEmail": {
+                                    "缺少邮箱": {
+                                        "summary": "未提供 email 字段或为空",
                                         "value": {
                                             "message": "email is required"
                                         }
@@ -104,14 +146,15 @@
                         }
                     },
                     "409": {
-                        "description": "Conflict (email already exists)",
+                        "description": "邮箱地址冲突",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/ErrorResponse"
                                 },
                                 "examples": {
-                                    "emailExists": {
+                                    "邮箱已存在": {
+                                        "summary": "该邮箱地址已被其他用户使用",
                                         "value": {
                                             "message": "Email already exists"
                                         }
@@ -126,42 +169,59 @@
         "/api/users/{id}": {
             "get": {
                 "tags": [
-                    "Users"
+                    "用户管理"
                 ],
-                "summary": "Get a user by id",
+                "summary": "根据 ID 获取指定用户",
+                "description": "### 业务说明\n\n根据用户 ID 获取单个用户的详细信息。\n\n#### 功能特点\n- 只返回未被软删除的用户\n- 如果用户不存在或已被删除，返回 404 错误\n- 返回用户的所有字段信息\n\n#### 使用场景\n- 查看用户详情页面\n- 编辑用户时的数据回显\n- 用户信息验证\n\n#### 验证规则\n- **id**：必填，必须是正整数（>= 1）\n\n#### 错误处理\n- **400**：ID 格式无效（不是正整数）\n- **404**：用户不存在或已被软删除\n\n#### 注意事项\n- 软删除的用户无法通过此接口查询到\n- ID 必须为有效正整数，负数、0、小数都会被拒绝",
                 "operationId": "getUserById",
                 "parameters": [
                     {
                         "name": "id",
                         "in": "path",
                         "required": true,
+                        "description": "用户 ID，必须是正整数",
                         "schema": {
                             "type": "integer",
                             "format": "int32",
-                            "minimum": 1
+                            "minimum": 1,
+                            "example": 1
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "成功返回用户信息",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/User"
+                                },
+                                "examples": {
+                                    "查询成功": {
+                                        "summary": "返回指定 ID 的用户信息",
+                                        "value": {
+                                            "id": 1,
+                                            "name": "张三",
+                                            "email": "zhangsan@example.com",
+                                            "created_at": "2024-01-15T08:30:00.000Z",
+                                            "updated_at": "2024-01-15T08:30:00.000Z",
+                                            "deleted_at": null
+                                        }
+                                    }
                                 }
                             }
                         }
                     },
                     "400": {
-                        "description": "Bad Request (invalid id)",
+                        "description": "ID 格式无效",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/ErrorResponse"
                                 },
                                 "examples": {
-                                    "invalidId": {
+                                    "无效ID": {
+                                        "summary": "ID 不是正整数",
                                         "value": {
                                             "message": "Invalid id"
                                         }
@@ -171,14 +231,15 @@
                         }
                     },
                     "404": {
-                        "description": "Not Found",
+                        "description": "用户不存在",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/ErrorResponse"
                                 },
                                 "examples": {
-                                    "notFound": {
+                                    "用户未找到": {
+                                        "summary": "指定 ID 的用户不存在或已被软删除",
                                         "value": {
                                             "message": "User not found"
                                         }
@@ -191,44 +252,51 @@
             },
             "put": {
                 "tags": [
-                    "Users"
+                    "用户管理"
                 ],
-                "summary": "Update a user by id (partial)",
+                "summary": "更新指定用户信息（部分更新）",
+                "description": "### 业务说明\n\n更新指定 ID 的用户信息，支持部分更新（只更新提供的字段）。\n\n#### 功能特点\n- **部分更新**：只更新请求体中包含的字段，未提供的字段保持不变\n- **字段可选**：name 和 email 都是可选的，至少提供一个即可\n- **自动更新时间戳**：每次更新都会自动更新 updated_at 字段\n- **邮箱唯一性验证**：如果更新邮箱，系统会验证新邮箱的唯一性\n- **软删除保护**：只能更新未被软删除的用户\n\n#### 使用场景\n- 用户修改个人信息\n- 管理员修改用户信息\n- 数据更正和补充\n\n#### 验证规则\n- **id**：必填，必须是正整数（>= 1）\n- **name**：可选，如果提供则不能为空字符串\n- **email**：可选，如果提供则不能为空字符串且必须唯一\n\n#### 错误处理\n- **400**：ID 格式无效、JSON 格式错误、没有字段需要更新、字段验证失败\n- **404**：用户不存在或已被软删除\n- **409**：新邮箱地址已存在\n\n#### 注意事项\n- 请求体至少需要包含 name 或 email 中的一个字段\n- 如果提供的字段值与当前值相同，系统仍然会执行更新操作并更新 updated_at\n- 邮箱更新时会检查整个系统的唯一性，不能与其他用户重复",
                 "operationId": "updateUser",
                 "parameters": [
                     {
                         "name": "id",
                         "in": "path",
                         "required": true,
+                        "description": "用户 ID，必须是正整数",
                         "schema": {
                             "type": "integer",
                             "format": "int32",
-                            "minimum": 1
+                            "minimum": 1,
+                            "example": 1
                         }
                     }
                 ],
                 "requestBody": {
                     "required": true,
+                    "description": "至少需要提供 name 或 email 字段中的一个",
                     "content": {
                         "application/json": {
                             "schema": {
                                 "$ref": "#/components/schemas/UpdateUserRequest"
                             },
                             "examples": {
-                                "updateName": {
+                                "只更新姓名": {
+                                    "summary": "仅修改用户姓名",
                                     "value": {
-                                        "name": "New Name"
+                                        "name": "张三丰"
                                     }
                                 },
-                                "updateEmail": {
+                                "只更新邮箱": {
+                                    "summary": "仅修改用户邮箱",
                                     "value": {
-                                        "email": "new@example.com"
+                                        "email": "zhangsanfeng@example.com"
                                     }
                                 },
-                                "updateBoth": {
+                                "同时更新姓名和邮箱": {
+                                    "summary": "同时修改用户的姓名和邮箱",
                                     "value": {
-                                        "name": "New Name",
-                                        "email": "new@example.com"
+                                        "name": "张三丰",
+                                        "email": "zhangsanfeng@example.com"
                                     }
                                 }
                             }
@@ -237,44 +305,62 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "更新成功，返回更新后的用户信息",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/User"
+                                },
+                                "examples": {
+                                    "更新成功": {
+                                        "summary": "返回更新后的完整用户信息",
+                                        "value": {
+                                            "id": 1,
+                                            "name": "张三丰",
+                                            "email": "zhangsanfeng@example.com",
+                                            "created_at": "2024-01-15T08:30:00.000Z",
+                                            "updated_at": "2024-02-20T15:45:20.456Z",
+                                            "deleted_at": null
+                                        }
+                                    }
                                 }
                             }
                         }
                     },
                     "400": {
-                        "description": "Bad Request (invalid id/body)",
+                        "description": "请求参数错误",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/ErrorResponse"
                                 },
                                 "examples": {
-                                    "invalidId": {
+                                    "无效ID": {
+                                        "summary": "ID 格式不正确",
                                         "value": {
                                             "message": "Invalid id"
                                         }
                                     },
-                                    "invalidJson": {
+                                    "JSON格式错误": {
+                                        "summary": "请求体不是有效的 JSON",
                                         "value": {
                                             "message": "Invalid JSON body"
                                         }
                                     },
-                                    "nothingToUpdate": {
+                                    "没有字段需要更新": {
+                                        "summary": "请求体中没有有效的字段",
                                         "value": {
                                             "message": "Nothing to update"
                                         }
                                     },
-                                    "invalidName": {
+                                    "姓名验证失败": {
+                                        "summary": "name 字段为空字符串",
                                         "value": {
                                             "message": "name must be a non-empty string"
                                         }
                                     },
-                                    "invalidEmail": {
+                                    "邮箱验证失败": {
+                                        "summary": "email 字段为空字符串",
                                         "value": {
                                             "message": "email must be a non-empty string"
                                         }
@@ -284,14 +370,15 @@
                         }
                     },
                     "404": {
-                        "description": "Not Found",
+                        "description": "用户不存在",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/ErrorResponse"
                                 },
                                 "examples": {
-                                    "notFound": {
+                                    "用户未找到": {
+                                        "summary": "指定 ID 的用户不存在或已被软删除",
                                         "value": {
                                             "message": "User not found"
                                         }
@@ -301,14 +388,15 @@
                         }
                     },
                     "409": {
-                        "description": "Conflict (email already exists)",
+                        "description": "邮箱地址冲突",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/ErrorResponse"
                                 },
                                 "examples": {
-                                    "emailExists": {
+                                    "邮箱已存在": {
+                                        "summary": "新邮箱地址已被其他用户使用",
                                         "value": {
                                             "message": "Email already exists"
                                         }
@@ -321,42 +409,62 @@
             },
             "delete": {
                 "tags": [
-                    "Users"
+                    "用户管理"
                 ],
-                "summary": "Delete a user by id (soft delete)",
+                "summary": "删除指定用户（软删除）",
+                "description": "### 业务说明\n\n对指定 ID 的用户执行软删除操作。\n\n#### 功能特点\n- **软删除机制**：不会从数据库中物理删除用户记录，而是将 deleted_at 字段设置为当前时间\n- **数据保留**：用户的所有信息都会保留在数据库中\n- **查询过滤**：被软删除的用户不会出现在「获取所有用户」和「根据 ID 获取用户」的查询结果中\n- **操作不可逆**：软删除操作没有提供「恢复」接口（需要直接操作数据库）\n\n#### 使用场景\n- 用户注销账号\n- 管理员删除违规用户\n- 数据清理（保留数据但不显示）\n\n#### 验证规则\n- **id**：必填，必须是正整数（>= 1）\n\n#### 错误处理\n- **400**：ID 格式无效\n- **404**：用户不存在或已被软删除\n\n#### 注意事项\n- 此操作是软删除，数据仍存在于数据库中\n- 软删除后的用户无法通过正常的查询接口获取到\n- 软删除的用户信息会保留在响应中返回\n- 如果需要恢复用户，需要直接操作数据库将 deleted_at 设置为 null\n- 重复删除同一个用户会返回 404（第一次删除后用户就找不到了）",
                 "operationId": "deleteUser",
                 "parameters": [
                     {
                         "name": "id",
                         "in": "path",
                         "required": true,
+                        "description": "用户 ID，必须是正整数",
                         "schema": {
                             "type": "integer",
                             "format": "int32",
-                            "minimum": 1
+                            "minimum": 1,
+                            "example": 1
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "软删除成功，返回被删除的用户信息和确认消息",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/DeleteUserResponse"
+                                },
+                                "examples": {
+                                    "删除成功": {
+                                        "summary": "成功软删除用户",
+                                        "value": {
+                                            "message": "Deleted",
+                                            "data": {
+                                                "id": 1,
+                                                "name": "张三",
+                                                "email": "zhangsan@example.com",
+                                                "created_at": "2024-01-15T08:30:00.000Z",
+                                                "updated_at": "2024-02-20T16:00:00.000Z",
+                                                "deleted_at": "2024-02-20T16:00:00.000Z"
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
                     },
                     "400": {
-                        "description": "Bad Request (invalid id)",
+                        "description": "ID 格式无效",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/ErrorResponse"
                                 },
                                 "examples": {
-                                    "invalidId": {
+                                    "无效ID": {
+                                        "summary": "ID 不是正整数",
                                         "value": {
                                             "message": "Invalid id"
                                         }
@@ -366,14 +474,15 @@
                         }
                     },
                     "404": {
-                        "description": "Not Found",
+                        "description": "用户不存在",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/ErrorResponse"
                                 },
                                 "examples": {
-                                    "notFound": {
+                                    "用户未找到": {
+                                        "summary": "指定 ID 的用户不存在或已被软删除",
                                         "value": {
                                             "message": "User not found"
                                         }
@@ -400,32 +509,39 @@
                     "id": {
                         "type": "integer",
                         "format": "int32",
+                        "description": "用户 ID，由数据库自动生成，自增主键",
                         "example": 1
                     },
                     "name": {
                         "type": "string",
-                        "example": "Alice"
+                        "description": "用户姓名",
+                        "example": "张三"
                     },
                     "email": {
                         "type": "string",
-                        "example": "alice@example.com"
+                        "description": "用户邮箱地址，在系统中必须唯一",
+                        "example": "zhangsan@example.com"
                     },
                     "created_at": {
                         "type": "string",
-                        "format": "date-time"
+                        "format": "date-time",
+                        "description": "用户创建时间，由系统自动设置"
                     },
                     "updated_at": {
                         "type": "string",
                         "format": "date-time",
-                        "nullable": true
+                        "nullable": true,
+                        "description": "用户信息最后更新时间，创建时由系统设置，每次更新时自动更新"
                     },
                     "deleted_at": {
                         "type": "string",
                         "format": "date-time",
-                        "nullable": true
+                        "nullable": true,
+                        "description": "软删除时间，null 表示用户未删除，有值表示用户被删除的时间"
                     }
                 },
-                "additionalProperties": true
+                "additionalProperties": false,
+                "description": "用户对象，包含用户的基本信息和时间戳字段"
             },
             "CreateUserRequest": {
                 "type": "object",
@@ -436,28 +552,38 @@
                 "properties": {
                     "name": {
                         "type": "string",
-                        "minLength": 1
+                        "minLength": 1,
+                        "description": "用户姓名，不能为空字符串",
+                        "example": "张三"
                     },
                     "email": {
                         "type": "string",
-                        "minLength": 1
+                        "minLength": 1,
+                        "description": "用户邮箱地址，不能为空字符串，在系统中必须唯一",
+                        "example": "zhangsan@example.com"
                     }
                 },
-                "additionalProperties": false
+                "additionalProperties": false,
+                "description": "创建用户的请求体，name 和 email 都是必填字段"
             },
             "UpdateUserRequest": {
                 "type": "object",
                 "properties": {
                     "name": {
                         "type": "string",
-                        "minLength": 1
+                        "minLength": 1,
+                        "description": "用户的新姓名，如果提供则不能为空字符串",
+                        "example": "张三丰"
                     },
                     "email": {
                         "type": "string",
-                        "minLength": 1
+                        "minLength": 1,
+                        "description": "用户的新邮箱地址，如果提供则不能为空字符串且必须唯一",
+                        "example": "zhangsanfeng@example.com"
                     }
                 },
-                "additionalProperties": false
+                "additionalProperties": false,
+                "description": "更新用户的请求体，name 和 email 都是可选字段，但至少需要提供一个"
             },
             "DeleteUserResponse": {
                 "type": "object",
@@ -468,13 +594,16 @@
                 "properties": {
                     "message": {
                         "type": "string",
+                        "description": "操作结果消息",
                         "example": "Deleted"
                     },
                     "data": {
-                        "$ref": "#/components/schemas/User"
+                        "$ref": "#/components/schemas/User",
+                        "description": "被删除的用户完整信息"
                     }
                 },
-                "additionalProperties": true
+                "additionalProperties": false,
+                "description": "删除用户的响应体，包含操作确认消息和被删除的用户信息"
             },
             "ErrorResponse": {
                 "type": "object",
@@ -483,10 +612,12 @@
                 ],
                 "properties": {
                     "message": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "错误消息，描述具体错误原因"
                     }
                 },
-                "additionalProperties": true
+                "additionalProperties": false,
+                "description": "错误响应体，包含错误描述信息"
             }
         }
     }

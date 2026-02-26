@@ -2,10 +2,7 @@ import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors';
 import 'dotenv/config';
-import { drizzle } from 'drizzle-orm/node-postgres';
 import userController from './controllers/user.controller';
-
-export const db = drizzle(process.env.DATABASE_URL!);
 
 const app = new Hono()
 
