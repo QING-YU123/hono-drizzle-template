@@ -1,0 +1,19 @@
+{
+  "currentVersion": null,
+  "versions": [],
+  "currentPhase": "init",
+  "lastAction": null,
+  "lastUpdateTime": null,
+  "activeWorkflow": {
+    "version": null,
+    "phase": "init",
+    "completedSteps": [],
+    "pendingSteps": [],
+    "blockedBy": []
+  },
+  "metadata": {
+    "projectName": "hono-drizzle-template",
+    "createdAt": null,
+    "lastModified": null
+  }
+}

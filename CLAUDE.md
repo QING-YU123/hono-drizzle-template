@@ -4,78 +4,126 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 项目概述
 
-这是一个基于 Hono + Drizzle ORM 的 TypeScript API 模板项目，使用 PostgreSQL 数据库。
-
+基于 Hono + Drizzle ORM + PostgreSQL 的 TypeScript API 项目模板，集成了完整的 AI 辅助开发技能系统（Skills Chain）。
 
 ## 常用命令
 
 ### 开发
 ```bash
-npm run dev      # 启动开发服务器 (tsx watch)
-npm run build    # TypeScript 编译
-npm run start    # 运行编译后的生产版本
+pnpm dev       # 启动开发服务器 (端口 3001)
+pnpm build     # TypeScript 编译到 dist/
+pnpm start     # 运行生产版本
 ```
 
 ### 数据库
 ```bash
-npx drizzle-kit push     # 将 schema 推送到数据库 (schema 位于 ./src/db/schema)
+pnpm drizzle-kit push     # 推送 schema 到数据库
+pnpm drizzle-kit studio   # 打开数据库管理界面
+```
+
+### 测试
+```bash
+pnpm test               # 运行所有测试
+pnpm test:ui            # 打开 Vitest UI
+pnpm test:coverage      # 生成覆盖率报告
 ```
 
 ## 架构说明
 
-### 项目结构
-- `src/index.ts` - 应用入口，初始化 Hono app 和数据库连接
-- `src/db/schema/` - Drizzle ORM 数据库模型定义
-  - `users.ts` - 表定义示例
-  - `plugin/columns.helpers.ts` - 公共列字段 (created_at, updated_at, deleted_at)
-- `src/controllers/` - Hono 路由控制器 (处理 HTTP 请求/响应)
-- `src/services/` - 业务逻辑层 (数据库操作)
-
 ### 分层架构
-项目采用经典的 MVC 分层模式：
-1. **Controller 层** - 处理 HTTP 请求，参数验证，返回 JSON 响应
-2. **Service 层** - 业务逻辑和数据库操作
-3. **Schema 层** - 数据库表结构定义
+项目采用三层分离模式：
 
-### 数据库注意事项
-- 使用 PostgreSQL 方言
-- 实现软删除模式 (deleted_at 字段)
-- 所有查询都应过滤已删除记录: `where(isNull(table.deleted_at))`
-- 数据库实例从 `src/index.ts` 导出使用
+| 层 | 目录 | 职责 |
+|---|---|---|
+| **Controller** | `src/controllers/` | HTTP 请求处理、参数验证、响应格式化 |
+| **Service** | `src/services/` | 业务逻辑、数据库操作 |
+| **Schema** | `src/db/schema/` | 数据库表结构定义 |
 
-### Drizzle Kit 配置
-- 配置文件: `drizzle.config.ts`
-- Schema 路径: `./src/db/schema`
-- 迁移输出目录: `./drizzle`
-- 需要 `.env` 文件中的 `DATABASE_URL` 环境变量
+### 项目结构
+```
+src/
+├── index.ts                 # 应用入口，导出 app 供测试使用
+├── controllers/             # API 路由控制器
+│   └── user.controller.ts   # 遵循 RESTful 规范，含 JSDoc 注释
+├── services/                # 业务逻辑层
+│   └── user.service.ts
+├── db/
+│   ├── index.ts             # 数据库连接导出
+│   └── schema/
+│       ├── users.ts         # 表定义
+│       └── plugin/
+│           └── columns.helpers.ts  # 公共字段 (created_at, updated_at)
+└── seeders/                 # 数据库种子数据
 
-### TypeScript 配置
-- 使用 ESNext target 和 NodeNext 模块
-- 严格模式已启用
-- JSX 支持用于 Hono 的 JSX 语法
+tests/                       # Vitest 测试
+├── api/                     # API 集成测试
+├── utils/                   # 测试辅助函数
+└── vitest.config.ts         # 测试配置
 
-## AI 开发约束
+business/                    # 业务文档和版本管理
+├── global/                  # 全局设计文档
+├── iterations/              # 版本迭代文档
+├── .project-state.json      # 项目状态（由 Skills 管理）
+└── SKILLS_CHAIN_GUIDE.md    # 技能链使用指南
+```
 
-### 职责范围
-AI 应该专注于代码开发，不应该负责以下任务：
+### 数据库规范
+- **方言**: PostgreSQL
+- **公共字段**: 使用 `timestamps` helper 包含 `created_at`, `updated_at`, `deleted_at`
+- **软删除**: 所有查询应过滤 `deleted_at IS NULL`
+- **主键**: 使用 `generatedAlwaysAsIdentity()`
+- **环境变量**: `DATABASE_URL` (从 `.env` 加载)
 
-❌ **不要创建**：
-- 测试文件（单元测试、集成测试、E2E 测试）
-- CI/CD 配置（GitHub Actions, GitLab CI, Jenkins 等）
-- Docker 配置（Dockerfile, docker-compose.yml）
-- Kubernetes 配置
-- 部署脚本
-- 监控和日志配置
-- 环境变量模板（除了必要的 DATABASE_URL 说明）
+### Controller 编码规范
+- 使用 Hono 路由，导出默认实例
+- 路由前缀在 `src/index.ts` 中挂载
+- 必须包含 JSDoc 注释：`@description`, `@route`, `@param`, `@returns`, `@throws`, `@example`
+- 参数验证：ID 需检查 `Number.isInteger(id) && id > 0`
+- 错误处理：唯一约束违反码 `23505` 返回 409
+- 响应格式：`c.json(data, status)`
 
-✅ **应该专注于**：
-- 业务逻辑代码实现
+## AI 辅助开发 (Skills Chain)
+
+项目内置完整的 AI 技能系统，按以下流程执行：
+
+```
+version-designer (版本设计)
+    ↓
+schema-generator (数据库设计)
+    ↓
+business-generator (业务开发)
+    ↓
+openapi-generator (API 文档)
+    ↓
+test-case-designer (测试用例)
+    ↓
+test-generator (测试执行)
+    ↓
+code-reviewer (代码审查)
+```
+
+### 快速开始
+直接说 "开始新版本开发" 或使用 `/project-orchestrator` 启动自动化流程。
+
+详细文档见 `business/SKILLS_CHAIN_GUIDE.md`
+
+## TypeScript 配置
+- **Target**: ESNext
+- **Module**: NodeNext
+- **JSX**: react-jsx (hono/jsx)
+- **严格模式**: 已启用
+- **路径别名**: 测试中 `@` 指向 `src/`
+
+## 开发约束
+
+❌ **不创建**:
+- 测试文件（由 test-generator 技能生成）
+- CI/CD、Docker、K8s 配置
+- 监控日志配置
+
+✅ **专注于**:
+- 业务逻辑实现
 - 数据库 Schema 和迁移
 - API 路由和控制器
-- 服务层开发
 - 类型定义和验证
-- 代码重构和优化
-- Bug 修复
-
-### 原因
-测试、部署和基础设施应该由开发团队根据实际需求手动配置，AI 的角色是加速业务代码的开发。
+- 代码重构和 Bug 修复

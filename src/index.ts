@@ -20,10 +20,16 @@ app.get('/', (c) => {
   return c.text('Hello! The Hono + Drizzle API is running.');
 });
 
-serve({
-  fetch: app.fetch,
-  port: 3001
-},
-  (info) => {
-    console.log(`🚀 Server is running on http://localhost:${info.port}`);
-  })
+// 导出 app 供测试使用
+export { app };
+
+// 只在直接运行时启动服务器
+if (import.meta.url === `file://${process.argv[1]}`) {
+  serve({
+    fetch: app.fetch,
+    port: 3001
+  },
+    (info) => {
+      console.log(`🚀 Server is running on http://localhost:${info.port}`);
+    })
+}
