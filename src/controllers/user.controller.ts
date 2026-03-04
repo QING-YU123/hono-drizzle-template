@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { UserService } from '../services/user.service';
+import { AuthService } from '../services/auth.service';
 
 /**
  * 用户控制器
@@ -197,6 +198,42 @@ userController.delete('/:id', async (c) => {
     }
 
     return c.json({ message: 'Deleted', data });
+});
+
+/**
+ * 获取当前登录用户信息
+ *
+ * @description 使用 JWT 访问令牌获取当前登录用户的完整信息
+ *              需要在请求头中携带 Authorization: Bearer {accessToken}
+ * @route GET /user/me
+ * @returns {Promise<Object>} JSON 响应，包含当前用户信息
+ * @throws {401} 当未认证或令牌无效时
+ *
+ * @example
+ * // GET /user/me
+ * // Headers: Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
+ * // Response: { id: 1, email: "user@example.com", name: "John", is_admin: false, ... }
+ */
+userController.get('/me', async (c) => {
+    // 获取 Authorization 头
+    const authHeader = c.req.header('Authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return c.json({ message: 'Unauthorized' }, 401);
+    }
+
+    // 提取令牌
+    const token = authHeader.substring(7);
+    if (!token) {
+        return c.json({ message: 'Unauthorized' }, 401);
+    }
+
+    // 验证令牌并获取用户信息
+    const user = await AuthService.getUserByToken(token);
+    if (!user) {
+        return c.json({ message: 'Unauthorized' }, 401);
+    }
+
+    return c.json(user);
 });
 
 export default userController;

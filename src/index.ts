@@ -2,7 +2,9 @@ import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors';
 import 'dotenv/config';
+import { fileURLToPath } from 'node:url';
 import userController from './controllers/user.controller';
+import authController from './controllers/auth.controller';
 
 const app = new Hono()
 
@@ -14,6 +16,7 @@ app.use('*', cors({
 }));
 
 // 2. 路由组装 (挂载 Controller)
+app.route('/auth', authController);
 app.route('/api/users', userController);
 
 app.get('/', (c) => {
@@ -24,7 +27,8 @@ app.get('/', (c) => {
 export { app };
 
 // 只在直接运行时启动服务器
-if (import.meta.url === `file://${process.argv[1]}`) {
+const __filename = fileURLToPath(import.meta.url);
+if (process.argv[1] === __filename) {
   serve({
     fetch: app.fetch,
     port: 3001

@@ -756,7 +756,12 @@ business/
 │   │   └── 审查/
 │   │       └── 代码审查报告/
 │   └── ...
-└── .project-log.md              # 项目执行日志
+├── .project-log.md              # 项目执行日志
+├── tests/                       # 测试代码（Vitest）
+│   └── api/
+│       └── *.test.ts            # API 测试文件
+└── OpenAPI/                     # OpenAPI 文档
+    └── *.openapi.json           # API 规范文档
 ```
 
 ## 🚨 常见问题处理

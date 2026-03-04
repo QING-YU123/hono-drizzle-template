@@ -1,6 +1,7 @@
 import { db } from '../db';
 import { usersTable as users } from '../db/schema/users';
 import { and, eq, isNull } from 'drizzle-orm';
+import { hashPassword, verifyPassword } from '../utils/password';
 
 /**
  * 用户服务类
@@ -161,5 +162,106 @@ export const UserService = {
             .where(and(eq(users.id, id), isNull(users.deleted_at)))
             .returning();
         return result[0] || null;
+    },
+
+    /**
+     * 根据邮箱查找用户
+     *
+     * @description 查找指定邮箱的用户，用于登录和注册验证
+     *              只返回未被软删除的用户
+     * @param {string} email - 用户邮箱
+     * @returns {Promise<Object|null>} 用户对象或 null
+     *
+     * @example
+     * const user = await UserService.findByEmail('user@example.com');
+     * // 返回: { id: 1, name: "John", email: "user@example.com", password_hash: "...", ... }
+     *
+     * const notFound = await UserService.findByEmail('notfound@example.com');
+     * // 返回: null
+     */
+    async findByEmail(email: string): Promise<any> {
+        const result = await db
+            .select()
+            .from(users)
+            .where(and(eq(users.email, email), isNull(users.deleted_at)));
+        return result[0] || null;
+    },
+
+    /**
+     * 创建用户（含密码哈希）
+     *
+     * @description 创建新用户，自动对密码进行哈希处理
+     *              用于用户注册功能
+     * @param {Object} data - 用户数据
+     * @param {string} data.name - 用户名称
+     * @param {string} data.email - 用户邮箱（必须唯一）
+     * @param {string} data.password - 明文密码（将被哈希处理）
+     * @returns {Promise<Object>} 创建的用户对象（不含密码哈希）
+     * @throws {Error} 数据库插入错误（如邮箱重复、约束违反等）
+     *
+     * @example
+     * const newUser = await UserService.createUserWithPassword({
+     *   name: "John Doe",
+     *   email: "john@example.com",
+     *   password: "myPassword123"
+     * });
+     * // 返回: { id: 1, name: "John Doe", email: "john@example.com", ... }
+     */
+    async createUserWithPassword(data: {
+        name: string;
+        email: string;
+        password: string;
+    }): Promise<any> {
+        const password_hash = await hashPassword(data.password);
+        const result = await db
+            .insert(users)
+            .values({
+                name: data.name,
+                email: data.email,
+                password_hash,
+                is_admin: false,
+                updated_at: new Date(),
+            })
+            .returning({
+                id: users.id,
+                name: users.name,
+                email: users.email,
+                is_admin: users.is_admin,
+                created_at: users.created_at,
+                updated_at: users.updated_at,
+            });
+        return result[0];
+    },
+
+    /**
+     * 验证用户密码
+     *
+     * @description 验证用户的密码是否正确
+     *              用于登录验证
+     * @param {string} email - 用户邮箱
+     * @param {string} password - 明文密码
+     * @returns {Promise<Object|null>} 用户对象（不含密码哈希），验证失败返回 null
+     *
+     * @example
+     * const user = await UserService.verifyCredentials('user@example.com', 'password123');
+     * if (user) { console.log('登录成功', user); }
+     *
+     * const invalid = await UserService.verifyCredentials('user@example.com', 'wrongpassword');
+     * // 返回: null
+     */
+    async verifyCredentials(email: string, password: string): Promise<any> {
+        const user = await this.findByEmail(email);
+        if (!user) {
+            return null;
+        }
+
+        const isValid = await verifyPassword(password, user.password_hash);
+        if (!isValid) {
+            return null;
+        }
+
+        // 返回用户信息，不包含密码哈希
+        const { password_hash, ...userWithoutPassword } = user;
+        return userWithoutPassword;
     }
 };

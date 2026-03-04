@@ -1,19 +1,131 @@
 {
-  "currentVersion": null,
-  "versions": [],
-  "currentPhase": "init",
-  "lastAction": null,
-  "lastUpdateTime": null,
+  "currentVersion": "v0.1.0-MVP",
+  "versions": [
+    {
+      "version": "v0.1.0-MVP",
+      "status": "completed",
+      "phases": {
+        "design": {
+          "status": "completed",
+          "completedAt": "2026-03-02T12:00:00Z"
+        },
+        "schema": {
+          "status": "completed",
+          "completedAt": "2026-03-02T12:30:00Z"
+        },
+        "development": {
+          "status": "completed",
+          "completedAt": "2026-03-02T13:00:00Z"
+        },
+        "documentation": {
+          "status": "completed",
+          "completedAt": "2026-03-02T13:30:00Z"
+        },
+        "test-design": {
+          "status": "completed",
+          "completedAt": "2026-03-02T14:00:00Z",
+          "outputFiles": [
+            "business/iterations/v0.1.0-MVP/测试/测试用例.md"
+          ]
+        },
+        "testing": {
+          "status": "completed",
+          "completedAt": "2026-03-02T15:55:00Z",
+          "outputFiles": [
+            "business/iterations/v0.1.0-MVP/测试/测试报告/测试报告-20260302-155500.md"
+          ],
+          "testResults": {
+            "total": 32,
+            "passed": 29,
+            "failed": 3,
+            "skipped": 0,
+            "passRate": 90.63
+          }
+        },
+        "review": {
+          "status": "completed",
+          "completedAt": "2026-03-02T16:00:00Z",
+          "outputFiles": [
+            "business/iterations/v0.1.0-MVP/审查/代码审查报告-20260302-160000.md"
+          ],
+          "reviewResults": {
+            "grade": "B",
+            "totalIssues": 8,
+            "critical": 2,
+            "warning": 3,
+            "suggestion": 3
+          }
+        },
+        "fixes": {
+          "status": "completed",
+          "completedAt": "2026-03-02T16:15:00Z",
+          "outputFiles": [
+            "business/iterations/v0.1.0-MVP/测试/测试报告/测试报告-20260302-161500.md",
+            "business/iterations/v0.1.0-MVP/审查/代码审查报告-20260302-161500.md"
+          ],
+          "fixes": [
+            {
+              "issue": "参数验证逻辑顺序错误",
+              "file": "src/controllers/auth.controller.ts",
+              "line": 56,
+              "description": "空字符串 password 验证顺序问题"
+            },
+            {
+              "issue": "登录空字符串密码验证",
+              "file": "src/controllers/auth.controller.ts",
+              "line": 115,
+              "description": "空格密码绕过验证"
+            },
+            {
+              "issue": "测试数据隔离问题",
+              "file": "tests/api/auth.test.ts",
+              "description": "使用时间戳生成唯一邮箱地址"
+            },
+            {
+              "issue": "刷新令牌测试不稳定性",
+              "file": "tests/api/auth.test.ts",
+              "description": "将 beforeAll 改为 beforeEach"
+            },
+            {
+              "issue": "测试超时问题",
+              "file": "tests/api/auth.test.ts",
+              "description": "为 bcrypt 操作增加超时时间"
+            }
+          ],
+          "finalTestResults": {
+            "total": 32,
+            "passed": 32,
+            "failed": 0,
+            "skipped": 0,
+            "passRate": 100
+          },
+          "finalGrade": "A"
+        }
+      }
+    }
+  ],
+  "currentPhase": "completed",
+  "lastAction": "fixes",
+  "lastUpdateTime": "2026-03-02T16:15:00Z",
   "activeWorkflow": {
-    "version": null,
-    "phase": "init",
-    "completedSteps": [],
+    "version": "v0.1.0-MVP",
+    "phase": "completed",
+    "completedSteps": [
+      "version-designer",
+      "schema-generator",
+      "business-generator",
+      "openapi-generator",
+      "test-case-designer",
+      "test-generator",
+      "code-reviewer",
+      "fixes"
+    ],
     "pendingSteps": [],
     "blockedBy": []
   },
   "metadata": {
     "projectName": "hono-drizzle-template",
-    "createdAt": null,
-    "lastModified": null
+    "createdAt": "2026-03-02T10:00:00Z",
+    "lastModified": "2026-03-02T16:15:00Z"
   }
 }
